@@ -6,8 +6,9 @@ use App\Models\TenantContract;
 use App\Services\OpenAIService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
 
 class ContractAIController extends Controller
 {
@@ -30,7 +31,9 @@ class ContractAIController extends Controller
     public function show(TenantContract $tenantContract): View
     {
         // Kiểm tra quyền truy cập
-        $this->authorize('view', $tenantContract->room->apartment);
+        if (Gate::denies('view-contract', $tenantContract)) {
+            abort(403, 'Unauthorized action.');
+        }
         
         // Load các mối quan hệ cần thiết
         $tenantContract->load(['room.apartment', 'tenant']);
@@ -44,7 +47,9 @@ class ContractAIController extends Controller
     public function askQuestion(Request $request, TenantContract $tenantContract): JsonResponse
     {
         // Kiểm tra quyền truy cập
-        $this->authorize('view', $tenantContract->room->apartment);
+        if (Gate::denies('view-contract', $tenantContract)) {
+            abort(403, 'Unauthorized action.');
+        }
         
         // Validate câu hỏi
         $validated = $request->validate([

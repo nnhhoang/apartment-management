@@ -16,14 +16,14 @@ Route::get('/', fn() => redirect()->route('login'));
 // Auth routes
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
-    Route::get('/home', HomeController::class);
+    Route::get('/home', HomeController::class)->name('dashboard');
 
     // Apartments (Tòa nhà)
     Route::controller(ApartmentController::class)->group(function () {
-        Route::get('/apartments', 'index');
+        Route::get('/apartments', 'index')->name('apartments.index');
         Route::get('/apartments/create', 'create');
         Route::post('/apartments', 'store');
-        Route::get('/apartments/{apartment}', 'show');
+        Route::get('/apartments/{apartment}', 'show')->name('apartments.show');
         Route::get('/apartments/{apartment}/edit', 'edit');
         Route::put('/apartments/{apartment}', 'update');
         Route::delete('/apartments/{apartment}', 'destroy');
@@ -31,8 +31,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Apartment Rooms (Phòng trọ)
     Route::controller(ApartmentRoomController::class)->group(function () {
-        Route::get('/apartment_rooms', 'index');
-        Route::get('/apartment_rooms/create', 'create');
+        Route::get('/apartment_rooms', 'index')->name('apartment_rooms.index');
+        Route::get('/apartment_rooms/create', 'create')->name('apartment_rooms.create');
         Route::post('/apartment_rooms', 'store');
         Route::get('/apartment_rooms/{apartmentRoom}', 'show');
         Route::get('/apartment_rooms/{apartmentRoom}/edit', 'edit');

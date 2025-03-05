@@ -111,6 +111,12 @@ class OpenAIService
         $formatMoney = function($amount) {
             return number_format($amount, 0, ',', '.') . ' VNĐ';
         };
+        
+        // Chuẩn bị nội dung end_date
+        $endDate = isset($contractData['end_date']) ? $contractData['end_date'] : 'Chưa kết thúc';
+        
+        // Chuẩn bị nội dung ghi chú
+        $note = empty($contractData['note']) ? 'Không có ghi chú' : $contractData['note'];
 
         // Tạo prompt cho system
         return <<<EOT
@@ -124,7 +130,7 @@ THÔNG TIN HỢP ĐỒNG:
 - Giá thuê: {$formatMoney($contractData['price'])}
 - Kỳ hạn thanh toán: {$payPeriod}
 - Ngày bắt đầu: {$contractData['start_date']}
-- Ngày kết thúc: {$contractData['end_date'] ?? 'Chưa kết thúc'}
+- Ngày kết thúc: {$endDate}
 - Số người ở hiện tại: {$contractData['number_of_tenant_current']}
 
 CHI TIẾT THANH TOÁN:
@@ -134,7 +140,7 @@ CHI TIẾT THANH TOÁN:
 - Chỉ số nước ban đầu: {$contractData['water_number_start']}
 
 GHI CHÚ:
-{$contractData['note'] ?? 'Không có ghi chú'}
+{$note}
 
 Hãy trả lời câu hỏi của người dùng dựa trên thông tin hợp đồng trên. Nếu không có thông tin để trả lời chính xác, hãy nói rằng bạn không có đủ thông tin và khuyên họ liên hệ với chủ nhà. Câu trả lời phải ngắn gọn, dễ hiểu và chính xác.
 EOT;
