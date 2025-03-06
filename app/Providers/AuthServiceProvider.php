@@ -8,7 +8,10 @@ use App\Models\RoomFeeCollection;
 use App\Models\Tenant;
 use App\Models\TenantContract;
 use App\Policies\ApartmentPolicy;
+use App\Policies\ApartmentRoomPolicy;
+use App\Policies\RoomFeeCollectionPolicy;
 use App\Policies\TenantPolicy;
+use App\Policies\TenantContractPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 
@@ -22,6 +25,9 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Apartment::class => ApartmentPolicy::class,
         Tenant::class => TenantPolicy::class,
+        ApartmentRoom::class => ApartmentRoomPolicy::class,
+        TenantContract::class => TenantContractPolicy::class,
+        RoomFeeCollection::class => RoomFeeCollectionPolicy::class,
     ];
 
     /**

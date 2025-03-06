@@ -11,7 +11,6 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class TenantContractController extends Controller
@@ -92,9 +91,7 @@ class TenantContractController extends Controller
         
         // Kiểm tra quyền truy cập phòng
         $room = ApartmentRoom::findOrFail($validatedData['apartment_room_id']);
-        if (Gate::denies('view-room', $room)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('view', $room);
         
         // Kiểm tra xem phòng đã có người thuê chưa
         if ($room->activeContract()->exists()) {
@@ -131,9 +128,7 @@ class TenantContractController extends Controller
      */
     public function show(TenantContract $tenantContract): View
     {
-        if (Gate::denies('view-contract', $tenantContract)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('view', $tenantContract);
         
         $tenantContract->load(['room.apartment', 'tenant', 'feeCollections' => function($query) {
             $query->orderBy('charge_date', 'desc');
@@ -147,9 +142,7 @@ class TenantContractController extends Controller
      */
     public function edit(TenantContract $tenantContract): View
     {
-        if (Gate::denies('update-contract', $tenantContract)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('update', $tenantContract);
         
         $tenantContract->load(['room.apartment', 'tenant']);
         
@@ -161,9 +154,7 @@ class TenantContractController extends Controller
      */
     public function update(TenantContractRequest $request, TenantContract $tenantContract): RedirectResponse
     {
-        if (Gate::denies('update-contract', $tenantContract)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('update', $tenantContract);
         
         $validatedData = $request->validated();
         
@@ -184,9 +175,7 @@ class TenantContractController extends Controller
      */
     public function destroy(TenantContract $tenantContract): RedirectResponse
     {
-        if (Gate::denies('update-contract', $tenantContract)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('delete', $tenantContract);
         
         // Kiểm tra xem hợp đồng đã có khoản thu tiền chưa
         if ($tenantContract->feeCollections()->exists()) {
@@ -204,9 +193,7 @@ class TenantContractController extends Controller
      */
     public function endContract(Request $request, TenantContract $tenantContract): RedirectResponse
     {
-        if (Gate::denies('update-contract', $tenantContract)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('update', $tenantContract);
         
         $request->validate([
             'end_date' => 'required|date',

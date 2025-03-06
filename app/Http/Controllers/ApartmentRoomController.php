@@ -9,7 +9,6 @@ use App\Models\ApartmentRoom;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -88,9 +87,7 @@ class ApartmentRoomController extends Controller
      */
     public function show(ApartmentRoom $apartmentRoom): View
     {
-        if (Gate::denies('view-room', $apartmentRoom)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('view', $apartmentRoom);
         
         $apartmentRoom->load('apartment', 'activeContract.tenant', 'feeCollections');
         
@@ -102,9 +99,7 @@ class ApartmentRoomController extends Controller
      */
     public function edit(ApartmentRoom $apartmentRoom): View
     {
-        if (Gate::denies('update-room', $apartmentRoom)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('update', $apartmentRoom);
         
         $apartments = Apartment::where('user_id', Auth::id())->orderBy('name')->get();
         
@@ -116,9 +111,7 @@ class ApartmentRoomController extends Controller
      */
     public function update(ApartmentRoomRequest $request, ApartmentRoom $apartmentRoom): RedirectResponse
     {
-        if (Gate::denies('update-room', $apartmentRoom)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('update', $apartmentRoom);
         
         $validatedData = $request->validated();
         
@@ -150,9 +143,7 @@ class ApartmentRoomController extends Controller
      */
     public function destroy(ApartmentRoom $apartmentRoom): RedirectResponse
     {
-        if (Gate::denies('delete-room', $apartmentRoom)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('delete', $apartmentRoom);
         
         // Kiểm tra xem phòng đã có hợp đồng hay chưa
         if ($apartmentRoom->contracts()->exists()) {

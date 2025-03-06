@@ -14,7 +14,6 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -107,9 +106,7 @@ class RoomFeeCollectionController extends Controller
         
         // Kiểm tra quyền truy cập hợp đồng
         $contract = TenantContract::findOrFail($validatedData['tenant_contract_id']);
-        if (Gate::denies('view-contract', $contract)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('view', $contract);
         
         // Kiểm tra xem phòng đã có người thuê chưa
         if (!$contract || $contract->end_date) {
@@ -184,9 +181,7 @@ class RoomFeeCollectionController extends Controller
      */
     public function show(RoomFeeCollection $roomFeeCollection): View
     {
-        if (Gate::denies('view-fee', $roomFeeCollection)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('view', $roomFeeCollection);
         
         $roomFeeCollection->load(['room.apartment', 'tenant', 'contract', 'histories']);
         
@@ -198,9 +193,7 @@ class RoomFeeCollectionController extends Controller
      */
     public function edit(RoomFeeCollection $roomFeeCollection): View
     {
-        if (Gate::denies('update-fee', $roomFeeCollection)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('update', $roomFeeCollection);
         
         $roomFeeCollection->load(['room.apartment', 'tenant', 'contract', 'histories']);
         
@@ -212,17 +205,13 @@ class RoomFeeCollectionController extends Controller
      */
     public function update(RoomFeeCollectionRequest $request, RoomFeeCollection $roomFeeCollection, FeeCalculationService $feeService): RedirectResponse
     {
-        if (Gate::denies('update-fee', $roomFeeCollection)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('update', $roomFeeCollection);
         
         $validatedData = $request->validated();
         
         // Kiểm tra quyền truy cập hợp đồng
         $contract = TenantContract::findOrFail($validatedData['tenant_contract_id']);
-        if (Gate::denies('view-contract', $contract)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('view', $contract);
         
         // Tính toán các khoản phí dựa trên hợp đồng
         $calculation = $feeService->calculateFee(
@@ -296,9 +285,7 @@ class RoomFeeCollectionController extends Controller
      */
     public function destroy(RoomFeeCollection $roomFeeCollection): RedirectResponse
     {
-        if (Gate::denies('delete-fee', $roomFeeCollection)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('delete', $roomFeeCollection);
         
         // Xóa ảnh đồng hồ điện nếu có
         if ($roomFeeCollection->electricity_image) {
@@ -325,9 +312,7 @@ class RoomFeeCollectionController extends Controller
      */
     public function addPayment(PaymentRequest $request, RoomFeeCollection $roomFeeCollection): RedirectResponse
     {
-        if (Gate::denies('update-fee', $roomFeeCollection)) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('update', $roomFeeCollection);
         
         $validatedData = $request->validated();
         
