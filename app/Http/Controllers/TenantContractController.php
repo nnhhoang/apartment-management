@@ -79,7 +79,10 @@ class TenantContractController extends Controller
         // Nếu có room_id từ query string
         $selectedRoomId = $request->room_id;
         
-        return view('tenant_contracts.create', compact('rooms', 'selectedRoomId'));
+        // Nếu có selected_tenant từ query string (when returning from tenant creation)
+        $selectedTenantId = $request->selected_tenant;
+        
+        return view('tenant_contracts.create', compact('rooms', 'selectedRoomId', 'selectedTenantId'));
     }
 
     /**

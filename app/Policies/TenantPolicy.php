@@ -15,11 +15,8 @@ class TenantPolicy
      */
     public function view(User $user, Tenant $tenant): bool
     {
-        return $tenant->contracts()
-            ->whereHas('room.apartment', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->exists();
+        // Allow any authenticated user to view any tenant
+        return true;
     }
 
     /**
@@ -35,11 +32,8 @@ class TenantPolicy
      */
     public function update(User $user, Tenant $tenant): bool
     {
-        return $tenant->contracts()
-            ->whereHas('room.apartment', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->exists();
+        // Allow any authenticated user to update any tenant
+        return true;
     }
 
     /**
@@ -47,10 +41,7 @@ class TenantPolicy
      */
     public function delete(User $user, Tenant $tenant): bool
     {
-        return $tenant->contracts()
-            ->whereHas('room.apartment', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->exists();
+        // Only allow deletion if tenant has no contracts
+        return !$tenant->contracts()->exists();
     }
 }

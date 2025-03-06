@@ -41,14 +41,14 @@ class TenantController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('tenants.create');
+        // Check if we're coming from contract creation
+        $returnToContract = $request->has('return_to') && $request->return_to === 'contract';
+        
+        return view('tenants.create', compact('returnToContract'));
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(TenantRequest $request): RedirectResponse|JsonResponse
     {
         $validatedData = $request->validated();
@@ -61,6 +61,12 @@ class TenantController extends Controller
                 'tenant' => $tenant,
                 'message' => 'Người thuê đã được tạo thành công.'
             ]);
+        }
+        
+        // Check if we should return to contract creation
+        if ($request->has('return_to') && $request->return_to === 'contract') {
+            return redirect()->route('tenant_contracts.create', ['selected_tenant' => $tenant->id])
+                ->with('success', 'Người thuê đã được tạo thành công. Hãy tiếp tục tạo hợp đồng.');
         }
         
         return redirect()->route('tenants.show', $tenant)

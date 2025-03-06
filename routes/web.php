@@ -45,7 +45,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/tenants', 'index');
         Route::get('/tenants/create', 'create');
         Route::post('/tenants', 'store');
-        Route::get('/tenants/{tenant}', 'show');
+        Route::get('/tenants/{tenant}', 'show')->name('tenants.show');
         Route::get('/tenants/{tenant}/edit', 'edit');
         Route::put('/tenants/{tenant}', 'update');
         Route::delete('/tenants/{tenant}', 'destroy');
