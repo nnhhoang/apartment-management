@@ -22,7 +22,8 @@
                 <select class="form-select @error('apartment_room_id') is-invalid @enderror" id="apartment_room_id" name="apartment_room_id" required>
                     <option value="">-- Chọn phòng trọ --</option>
                     @foreach($rooms as $room)
-                        <option value="{{ $room->id }}" {{ (old('apartment_room_id', $selectedRoomId) == $room->id) ? 'selected' : '' }}>
+                        <option value="{{ $room->id }}" {{ (old('apartment_room_id', $selectedRoomId) == $room->id) ? 'selected' : '' }}
+                           data-price="{{ $room->default_price }}">
                             {{ $room->apartment->name }} - Phòng {{ $room->room_number }} ({{ number_format($room->default_price, 0, ',', '.') }} VNĐ)
                         </option>
                     @endforeach
@@ -299,10 +300,9 @@
         
         roomSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
-            if (selectedOption.text) {
-                const priceMatch = selectedOption.text.match(/\(([\d.,]+)\s*VNĐ\)/);
-                if (priceMatch && priceMatch[1]) {
-                    const price = priceMatch[1].replace(/\./g, '').replace(',', '');
+            if (selectedOption && selectedOption.value) {
+                const price = selectedOption.getAttribute('data-price');
+                if (price) {
                     priceInput.value = price;
                 }
             }
