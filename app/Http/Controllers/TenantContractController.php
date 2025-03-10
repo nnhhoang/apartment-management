@@ -148,7 +148,15 @@ class TenantContractController extends Controller
             }
             
             // Nếu là tenant_id mới (không tồn tại trong database), tạo mới tenant
-            if ($request->has('new_tenant') && $request->new_tenant) {
+            if ($request->has('new_tenant') && $request->new_tenant == "1") {
+                // Kiểm tra dữ liệu tenant mới
+                $request->validate([
+                    'tenant_name' => 'required|string|max:45',
+                    'tenant_tel' => 'required|string|max:45',
+                    'tenant_email' => 'nullable|email|max:256',
+                    'tenant_identity_card_number' => 'nullable|string|max:45',
+                ]);
+                
                 $tenant = Tenant::create([
                     'name' => $request->tenant_name,
                     'tel' => $request->tenant_tel,
@@ -163,6 +171,9 @@ class TenantContractController extends Controller
             $validatedData['start_date'] = Carbon::parse($validatedData['start_date']);
             if (!empty($validatedData['end_date'])) {
                 $validatedData['end_date'] = Carbon::parse($validatedData['end_date']);
+            } else {
+                // Đảm bảo end_date là null khi trống
+                $validatedData['end_date'] = null;
             }
             
             // Tạo hợp đồng
@@ -221,6 +232,9 @@ class TenantContractController extends Controller
             $validatedData['start_date'] = Carbon::parse($validatedData['start_date']);
             if (!empty($validatedData['end_date'])) {
                 $validatedData['end_date'] = Carbon::parse($validatedData['end_date']);
+            } else {
+                // Đảm bảo end_date là null khi trống
+                $validatedData['end_date'] = null;
             }
             
             $tenantContract->update($validatedData);

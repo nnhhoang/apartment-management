@@ -21,9 +21,15 @@ class TenantContractRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Nếu đang tạo tenant mới, không bắt buộc phải có tenant_id
+        $tenant_id_rule = 'required|exists:tenants,id';
+        if ($this->has('new_tenant') && $this->new_tenant == "1") {
+            $tenant_id_rule = 'nullable';
+        }
+
         return [
             'apartment_room_id' => 'required|exists:apartment_rooms,id',
-            'tenant_id' => 'required|exists:tenants,id',
+            'tenant_id' => $tenant_id_rule,
             'pay_period' => 'required|integer|in:1,3,6,12',
             'price' => 'required|numeric|min:0',
             'electricity_pay_type' => 'required|integer|in:1,2,3',
