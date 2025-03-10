@@ -13,6 +13,13 @@
         <form action="{{ url('/tenants') }}" method="POST">
             @csrf
             
+            @if(isset($returnToContract) && $returnToContract)
+                <input type="hidden" name="return_to" value="contract">
+                @if(isset($roomId) && $roomId)
+                    <input type="hidden" name="room_id" value="{{ $roomId }}">
+                @endif
+            @endif
+            
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="name" class="form-label">Họ tên <span class="text-danger">*</span></label>
@@ -53,9 +60,22 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save me-1"></i>Lưu
                 </button>
-                <a href="{{ url('/tenants') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-1"></i>Quay lại
-                </a>
+                
+                @if(isset($returnToContract) && $returnToContract)
+                    @if(isset($roomId) && $roomId)
+                        <a href="{{ url('/tenant_contracts/create?room_id=' . $roomId) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Quay lại tạo hợp đồng
+                        </a>
+                    @else
+                        <a href="{{ url('/tenant_contracts/create') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Quay lại tạo hợp đồng
+                        </a>
+                    @endif
+                @else
+                    <a href="{{ url('/tenants') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Quay lại
+                    </a>
+                @endif
             </div>
         </form>
     </div>

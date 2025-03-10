@@ -28,7 +28,8 @@ class TenantController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('tel', 'like', "%{$search}%");
+                  ->orWhere('tel', 'like', "%{$search}%")
+                  ->orWhere('identity_card_number', 'like', "%{$search}%");
             });
         }
         
@@ -45,8 +46,9 @@ class TenantController extends Controller
     {
         // Check if we're coming from contract creation
         $returnToContract = $request->has('return_to') && $request->return_to === 'contract';
+        $roomId = $request->has('room_id') ? $request->room_id : null;
         
-        return view('tenants.create', compact('returnToContract'));
+        return view('tenants.create', compact('returnToContract', 'roomId'));
     }
     
     public function store(TenantRequest $request): RedirectResponse|JsonResponse
@@ -65,7 +67,8 @@ class TenantController extends Controller
         
         // Check if we should return to contract creation
         if ($request->has('return_to') && $request->return_to === 'contract') {
-            return redirect()->route('tenant_contracts.create', ['selected_tenant' => $tenant->id])
+            $roomId = $request->has('room_id') ? "?room_id={$request->room_id}&" : "?";
+            return redirect()->route('tenant_contracts.create', $roomId . 'selected_tenant=' . $tenant->id)
                 ->with('success', 'Người thuê đã được tạo thành công. Hãy tiếp tục tạo hợp đồng.');
         }
         
@@ -135,16 +138,23 @@ class TenantController extends Controller
      */
     public function getTenants(Request $request): JsonResponse
     {
-        $query = Tenant::whereHas('contracts.room.apartment', function($q) {
-            $q->where('user_id', Auth::id());
-        })->orWhereDoesntHave('contracts');
+        // Lấy người thuê đã từng thuộc về user này và người thuê chưa có hợp đồng
+        $query = Tenant::where(function($q) {
+            $q->whereHas('contracts.room.apartment', function($subQ) {
+                $subQ->where('user_id', Auth::id());
+            });
+            
+            // Hoặc là người thuê chưa có hợp đồng nào
+            $q->orWhereDoesntHave('contracts');
+        });
         
         if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('tel', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('identity_card_number', 'like', "%{$search}%");
             });
         }
         
