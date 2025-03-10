@@ -15,8 +15,10 @@ class TenantPolicy
      */
     public function view(User $user, Tenant $tenant): bool
     {
-        // Allow any authenticated user to view any tenant
-        return true;
+        // Allow any authenticated user to view any tenant that belongs to them
+        return $tenant->contracts()->whereHas('room.apartment', function($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->exists() || !$tenant->contracts()->exists();
     }
 
     /**
@@ -32,8 +34,10 @@ class TenantPolicy
      */
     public function update(User $user, Tenant $tenant): bool
     {
-        // Allow any authenticated user to update any tenant
-        return true;
+        // Allow any authenticated user to update any tenant that belongs to them
+        return $tenant->contracts()->whereHas('room.apartment', function($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->exists() || !$tenant->contracts()->exists();
     }
 
     /**

@@ -4,9 +4,9 @@
 
 @section('header', 'Tạo hợp đồng mới')
 
-@section('styles')
+@push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-@endsection
+@endpush
 
 @section('content')
 <div class="card shadow mb-4">
@@ -47,7 +47,7 @@
                     
                     <div id="existing_tenant_section" class="mb-3 {{ old('new_tenant') ? 'd-none' : '' }}">
                         <label for="tenant_id" class="form-label">Chọn người thuê <span class="text-danger">*</span></label>
-                        <select class="form-select @error('tenant_id') is-invalid @enderror" id="tenant_id" name="tenant_id" {{ old('new_tenant') ? '' : 'required' }}>
+                        <select class="form-select @error('tenant_id') is-invalid @enderror" id="tenant_id" name="tenant_id" data-old-value="{{ old('tenant_id', $selectedTenantId ?? '') }}" {{ old('new_tenant') ? '' : 'required' }}>
                             <option value="">-- Chọn người thuê --</option>
                             <!-- Danh sách người thuê sẽ được thêm qua Ajax -->
                         </select>
@@ -257,27 +257,28 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize datepickers
-        flatpickr(".datepicker", {
-            dateFormat: "Y-m-d",
-            allowInput: true
-        });
-        
-        // Load tenant list via AJAX
-        loadTenants();
-        
-        // Toggle new tenant form
-        const newTenantCheckbox = document.getElementById('new_tenant');
-        const existingTenantSection = document.getElementById('existing_tenant_section');
-        const newTenantSection = document.getElementById('new_tenant_section');
-        const tenantIdSelect = document.getElementById('tenant_id');
-        const tenantNameInput = document.getElementById('tenant_name');
-        const tenantTelInput = document.getElementById('tenant_tel');
-        
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize datepickers
+    flatpickr(".datepicker", {
+        dateFormat: "Y-m-d",
+        allowInput: true
+    });
+    
+    // Load tenant list via AJAX
+    loadTenants();
+    
+    // Toggle new tenant form
+    const newTenantCheckbox = document.getElementById('new_tenant');
+    const existingTenantSection = document.getElementById('existing_tenant_section');
+    const newTenantSection = document.getElementById('new_tenant_section');
+    const tenantIdSelect = document.getElementById('tenant_id');
+    const tenantNameInput = document.getElementById('tenant_name');
+    const tenantTelInput = document.getElementById('tenant_tel');
+    
+    if (newTenantCheckbox) {
         newTenantCheckbox.addEventListener('change', function() {
             if (this.checked) {
                 existingTenantSection.classList.add('d-none');
@@ -293,11 +294,13 @@
                 tenantTelInput.removeAttribute('required');
             }
         });
-        
-        // Load room price when room is selected
-        const roomSelect = document.getElementById('apartment_room_id');
-        const priceInput = document.getElementById('price');
-        
+    }
+    
+    // Load room price when room is selected
+    const roomSelect = document.getElementById('apartment_room_id');
+    const priceInput = document.getElementById('price');
+    
+    if (roomSelect && priceInput) {
         roomSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             if (selectedOption && selectedOption.value) {
@@ -312,13 +315,15 @@
         if (roomSelect.value) {
             roomSelect.dispatchEvent(new Event('change'));
         }
-    });
-    
-    function loadTenants() {
-        fetch('/tenants-list')
-            .then(response => response.json())
-            .then(data => {
-                const tenantSelect = document.getElementById('tenant_id');
+    }
+});
+
+function loadTenants() {
+    fetch('/tenants-list')
+        .then(response => response.json())
+        .then(data => {
+            const tenantSelect = document.getElementById('tenant_id');
+            if (tenantSelect) {
                 tenantSelect.innerHTML = '<option value="">-- Chọn người thuê --</option>';
                 
                 data.forEach(tenant => {
@@ -326,14 +331,17 @@
                     option.value = tenant.id;
                     option.textContent = `${tenant.name} - ${tenant.tel}` + (tenant.email ? ` - ${tenant.email}` : '');
                     
-                    if (tenant.id == "{{ old('tenant_id') }}") {
+                    // Check for old('tenant_id') or selected_tenant_id
+                    const oldValue = tenantSelect.getAttribute('data-old-value');
+                    if (tenant.id == oldValue) {
                         option.selected = true;
                     }
                     
                     tenantSelect.appendChild(option);
                 });
-            })
-            .catch(error => console.error('Error loading tenants:', error));
-    }
+            }
+        })
+        .catch(error => console.error('Error loading tenants:', error));
+}
 </script>
-@endsection
+@endpush

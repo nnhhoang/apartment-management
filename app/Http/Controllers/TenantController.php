@@ -17,12 +17,15 @@ class TenantController extends Controller
      */
     public function index(Request $request): View
     {
-        // Chỉ lấy danh sách người thuê từ các hợp đồng của user hiện tại
-        $query = Tenant::whereHas('contracts.room.apartment', function($q) {
-            $q->where('user_id', Auth::id());
+        // Get tenant list that belongs to the current user's apartments or have no contracts
+        $query = Tenant::where(function($q) {
+            $q->whereHas('contracts.room.apartment', function($subQ) {
+                $subQ->where('user_id', Auth::id());
+            })
+            ->orWhereDoesntHave('contracts');
         });
         
-        // Tìm kiếm theo tên, email hoặc số điện thoại
+        // Search by name, email, phone or ID card number
         if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -33,7 +36,7 @@ class TenantController extends Controller
             });
         }
         
-        // Phân trang kết quả
+        // Paginate results
         $tenants = $query->orderBy('name')->paginate(10);
         
         return view('tenants.index', compact('tenants'));
@@ -122,7 +125,7 @@ class TenantController extends Controller
     {
         $this->authorize('delete', $tenant);
         
-        // Kiểm tra xem người thuê đã có hợp đồng hay chưa
+        // Check if tenant has any contracts
         if ($tenant->contracts()->exists()) {
             return back()->with('error', 'Không thể xóa người thuê đã có hợp đồng.');
         }
@@ -134,17 +137,17 @@ class TenantController extends Controller
     }
     
     /**
-     * API lấy danh sách người thuê cho dropdown
+     * API to get tenant list for dropdown
      */
     public function getTenants(Request $request): JsonResponse
     {
-        // Lấy người thuê đã từng thuộc về user này và người thuê chưa có hợp đồng
+        // Get tenants who belong to this user and tenants with no contracts
         $query = Tenant::where(function($q) {
             $q->whereHas('contracts.room.apartment', function($subQ) {
                 $subQ->where('user_id', Auth::id());
             });
             
-            // Hoặc là người thuê chưa có hợp đồng nào
+            // Or tenants with no contracts
             $q->orWhereDoesntHave('contracts');
         });
         
@@ -158,7 +161,7 @@ class TenantController extends Controller
             });
         }
         
-        $tenants = $query->orderBy('name')->limit(10)->get();
+        $tenants = $query->orderBy('name')->limit(20)->get();
         
         return response()->json($tenants);
     }
