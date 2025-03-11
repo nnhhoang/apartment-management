@@ -124,8 +124,7 @@ class TenantController extends Controller
     public function destroy(Tenant $tenant): RedirectResponse
     {
         $this->authorize('delete', $tenant);
-        
-        // Check if tenant has any contracts
+
         if ($tenant->contracts()->exists()) {
             return back()->with('error', 'Không thể xóa người thuê đã có hợp đồng.');
         }

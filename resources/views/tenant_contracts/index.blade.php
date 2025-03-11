@@ -82,7 +82,11 @@
                         <td>{{ $contract->start_date->format('d/m/Y') }}</td>
                         <td>
                             @if($contract->end_date)
-                                <span class="badge bg-danger">Đã kết thúc</span>
+                                @if($contract->end_date->isPast())
+                                    <span class="badge bg-danger">Đã kết thúc</span>
+                                @else
+                                    <span class="badge bg-warning">Có thời hạn</span>
+                                @endif
                             @else
                                 <span class="badge bg-success">Đang hiệu lực</span>
                             @endif

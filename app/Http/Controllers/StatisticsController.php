@@ -131,8 +131,7 @@ class StatisticsController extends Controller
         ]);
         
         $year = $request->year;
-        
-        // Lấy doanh thu, dư nợ theo tháng trong năm
+
         $monthlyData = RoomFeeCollection::select(DB::raw('MONTH(charge_date) as month'))
             ->selectRaw('SUM(total_price) as total_price')
             ->selectRaw('SUM(total_paid) as total_paid')
@@ -144,8 +143,7 @@ class StatisticsController extends Controller
             ->groupBy(DB::raw('MONTH(charge_date)'))
             ->orderBy('month')
             ->get();
-        
-        // Chuẩn bị dữ liệu cho chart
+
         $chartData = [];
         for ($i = 1; $i <= 12; $i++) {
             $monthData = $monthlyData->firstWhere('month', $i);

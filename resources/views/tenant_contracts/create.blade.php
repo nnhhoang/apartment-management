@@ -316,6 +316,56 @@ document.addEventListener('DOMContentLoaded', function() {
             roomSelect.dispatchEvent(new Event('change'));
         }
     }
+
+    // Tự động tính ngày kết thúc dựa trên kỳ hạn thanh toán và ngày bắt đầu
+    const payPeriodSelect = document.getElementById('pay_period');
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+
+    if (payPeriodSelect && startDateInput && endDateInput) {
+        // Cập nhật ngày kết thúc khi kỳ hạn thanh toán hoặc ngày bắt đầu thay đổi
+        const updateEndDate = function() {
+            const payPeriod = parseInt(payPeriodSelect.value);
+            const startDate = startDateInput.value;
+            
+            if (payPeriod && startDate) {
+                // Tính toán ngày kết thúc dựa trên kỳ hạn thanh toán
+                const startDateObj = new Date(startDate);
+                startDateObj.setMonth(startDateObj.getMonth() + payPeriod);
+                
+                // Format lại để phù hợp với định dạng YYYY-MM-DD
+                const year = startDateObj.getFullYear();
+                const month = String(startDateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(startDateObj.getDate()).padStart(2, '0');
+                const formattedDate = `${year}-${month}-${day}`;
+                
+                // Cập nhật giá trị trong input field
+                const endDateFlatpickr = endDateInput._flatpickr;
+                if (endDateFlatpickr) {
+                    endDateFlatpickr.setDate(formattedDate);
+                } else {
+                    endDateInput.value = formattedDate;
+                }
+            } else {
+                // Nếu không có kỳ hạn hoặc ngày bắt đầu, xóa giá trị ngày kết thúc
+                const endDateFlatpickr = endDateInput._flatpickr;
+                if (endDateFlatpickr) {
+                    endDateFlatpickr.clear();
+                } else {
+                    endDateInput.value = '';
+                }
+            }
+        };
+        
+        // Thêm sự kiện listener
+        payPeriodSelect.addEventListener('change', updateEndDate);
+        startDateInput.addEventListener('change', updateEndDate);
+        
+        // Kích hoạt ban đầu nếu đã có giá trị
+        if (payPeriodSelect.value && startDateInput.value) {
+            updateEndDate();
+        }
+    }
 });
 
 function loadTenants() {

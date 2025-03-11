@@ -25,7 +25,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Apartments (Tòa nhà)
+    // Apartments 
     Route::controller(ApartmentController::class)->group(function () {
         Route::get('/apartments', 'index')->name('apartments.index');
         Route::get('/apartments/create', 'create');
@@ -36,7 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/apartments/{apartment}', 'destroy');
     });
 
-    // Apartment Rooms (Phòng trọ)
+    // Apartment Rooms 
     Route::controller(ApartmentRoomController::class)->group(function () {
         Route::get('/apartment_rooms', 'index')->name('apartment_rooms.index');
         Route::get('/apartment_rooms/create', 'create')->name('apartment_rooms.create');
@@ -47,7 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/apartment_rooms/{apartmentRoom}', 'destroy');
     });
 
-    // Tenants (Người thuê)
+    // Tenants 
     Route::controller(TenantController::class)->group(function () {
         Route::get('/tenants', 'index')->name('tenants.index');
         Route::get('/tenants/create', 'create')->name('tenants.create');
@@ -61,7 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/tenants-list', 'getTenants')->name('tenants.list');
     });
 
-    // Tenant Contracts (Hợp đồng thuê)
+    // Tenant Contracts
     Route::controller(TenantContractController::class)->group(function () {
         Route::get('/tenant_contracts', 'index')->name('tenant_contracts.index');
         Route::get('/tenant_contracts/create', 'create')->name('tenant_contracts.create');
@@ -73,7 +73,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/tenant_contracts/{tenantContract}/end', 'endContract')->name('tenant_contracts.end');
     });
 
-    // Room Fees (Tiền trọ hàng tháng)
+    // Room Fees 
     Route::controller(RoomFeeCollectionController::class)->group(function () {
         Route::get('/room_fees', 'index')->name('room_fees.index');
         Route::get('/room_fees/create', 'create')->name('room_fees.create');
@@ -85,7 +85,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/room_fees/{roomFeeCollection}/payment', 'addPayment')->name('room_fees.payment');
     });
 
-    // Statistics (Thống kê)
+    // Statistics 
     Route::controller(StatisticsController::class)->group(function () {
         Route::get('/statistics', 'index')->name('statistics.index');
         Route::get('/statistics/unpaid', 'unpaidRooms')->name('statistics.unpaid');
@@ -93,14 +93,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/statistics/rooms', 'roomStatistics')->name('statistics.rooms');
         Route::get('/statistics/chart-data', 'getChartData')->name('statistics.chart-data');
     });
-    
-    // AI Assistant cho hợp đồng
+
     Route::controller(ContractAIController::class)->group(function () {
-        // AI Assistant cho chủ trọ
         Route::get('/tenant_contracts/{tenantContract}/ai-assistant', 'show')->name('tenant_contracts.ai');
         Route::post('/tenant_contracts/{tenantContract}/ai-assistant/ask', 'askQuestion')->name('tenant_contracts.ai.ask');
-        
-        // AI Assistant cho người thuê
         Route::get('/my-contracts/ai-assistant', 'tenantAssistant')->name('tenant.ai');
     });
     
@@ -112,5 +108,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
-// Định nghĩa Auth routes của Laravel
 require __DIR__ . '/auth.php';

@@ -61,7 +61,7 @@
                     <tr>
                         <th>Trạng thái:</th>
                         <td>
-                            @if($apartmentRoom->activeContract)
+                            @if($apartmentRoom->hasActiveContract())
                                 <span class="badge bg-success">Đã thuê</span>
                             @else
                                 <span class="badge bg-warning">Trống</span>
@@ -78,73 +78,88 @@
     </div>
     
     <div class="col-md-7 mb-4">
-        @if($apartmentRoom->activeContract)
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 fw-bold text-primary">Thông tin người thuê hiện tại</h6>
-                <div>
-                    <a href="{{ url('/tenant_contracts/' . $apartmentRoom->activeContract->id) }}" class="btn btn-info btn-sm">
-                        <i class="fas fa-file-contract me-1"></i>Xem hợp đồng
-                    </a>
-                    <a href="{{ url('/room_fees/create?room_id=' . $apartmentRoom->id . '&contract_id=' . $apartmentRoom->activeContract->id) }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-money-bill-wave me-1"></i>Tạo khoản thu
-                    </a>
+        @if($apartmentRoom->hasActiveContract())
+            @php $activeContract = $apartmentRoom->getActiveContract(); @endphp
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 fw-bold text-primary">Thông tin người thuê hiện tại</h6>
+                    <div>
+                        <a href="{{ url('/tenant_contracts/' . $activeContract->id) }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-file-contract me-1"></i>Xem hợp đồng
+                        </a>
+                        <a href="{{ url('/room_fees/create?room_id=' . $apartmentRoom->id . '&contract_id=' . $activeContract->id) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-money-bill-wave me-1"></i>Tạo khoản thu
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th style="width: 35%;">Họ tên:</th>
+                            <td>
+                                <a href="{{ url('/tenants/' . $activeContract->tenant->id) }}">
+                                    {{ $activeContract->tenant->name }}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Số điện thoại:</th>
+                            <td>{{ $activeContract->tenant->tel }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ $activeContract->tenant->email ?? 'Không có' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Ngày bắt đầu hợp đồng:</th>
+                            <td>{{ $activeContract->start_date->format('d/m/Y') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Trạng thái hợp đồng:</th>
+                            <td>
+                                @if($activeContract->end_date)
+                                    @if($activeContract->end_date->isPast())
+                                        <span class="badge bg-danger">Đã kết thúc</span>
+                                    @else
+                                        <span class="badge bg-warning">Có thời hạn</span>
+                                    @endif
+                                @else
+                                    <span class="badge bg-success">Đang hiệu lực</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Giá thuê hiện tại:</th>
+                            <td>{{ number_format($activeContract->price, 0, ',', '.') }} VNĐ</td>
+                        </tr>
+                        <tr>
+                            <th>Số người ở hiện tại:</th>
+                            <td>{{ $activeContract->number_of_tenant_current }} người</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
-            <div class="card-body">
-                <table class="table">
-                    <tr>
-                        <th style="width: 35%;">Họ tên:</th>
-                        <td>
-                            <a href="{{ url('/tenants/' . $apartmentRoom->activeContract->tenant->id) }}">
-                                {{ $apartmentRoom->activeContract->tenant->name }}
-                            </a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Số điện thoại:</th>
-                        <td>{{ $apartmentRoom->activeContract->tenant->tel }}</td>
-                    </tr>
-                    <tr>
-                        <th>Email:</th>
-                        <td>{{ $apartmentRoom->activeContract->tenant->email ?? 'Không có' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Ngày bắt đầu hợp đồng:</th>
-                        <td>{{ $apartmentRoom->activeContract->start_date->format('d/m/Y') }}</td>
-                    </tr>
-                    <tr>
-                        <th>Giá thuê hiện tại:</th>
-                        <td>{{ number_format($apartmentRoom->activeContract->price, 0, ',', '.') }} VNĐ</td>
-                    </tr>
-                    <tr>
-                        <th>Số người ở hiện tại:</th>
-                        <td>{{ $apartmentRoom->activeContract->number_of_tenant_current }} người</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
         @else
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 fw-bold text-primary">Thông tin người thuê</h6>
-            </div>
-            <div class="card-body">
-                <div class="text-center p-4">
-                    <i class="fas fa-user-slash fa-4x mb-3 text-muted"></i>
-                    <p class="mb-3">Phòng này hiện đang trống</p>
-                    <a href="{{ url('/tenant_contracts/create?room_id=' . $apartmentRoom->id) }}" class="btn btn-success">
-                        <i class="fas fa-file-contract me-1"></i>Tạo hợp đồng mới
-                    </a>
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">Thông tin người thuê</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center p-4">
+                        <i class="fas fa-user-slash fa-4x mb-3 text-muted"></i>
+                        <p class="mb-3">Phòng này hiện đang trống</p>
+                        <a href="{{ url('/tenant_contracts/create?room_id=' . $apartmentRoom->id) }}" class="btn btn-success">
+                            <i class="fas fa-file-contract me-1"></i>Tạo hợp đồng mới
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
         @endif
 
         <div class="card shadow">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-primary">Lịch sử thu tiền</h6>
-                @if($apartmentRoom->activeContract)
+                @if($apartmentRoom->activeContract && (!$apartmentRoom->activeContract->end_date || !$apartmentRoom->activeContract->end_date->isPast()))
                 <a href="{{ url('/room_fees/create?room_id=' . $apartmentRoom->id . '&contract_id=' . $apartmentRoom->activeContract->id) }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus me-1"></i>Tạo khoản thu mới
                 </a>

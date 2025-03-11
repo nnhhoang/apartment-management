@@ -24,8 +24,7 @@ class TenantContractController extends Controller
         $query = TenantContract::whereHas('room.apartment', function($q) {
             $q->where('user_id', Auth::id());
         });
-        
-        // Lọc theo trạng thái hợp đồng
+
         if ($request->has('status') && $request->status !== '') {
             if ($request->status === 'active') {
                 $query->whereNull('end_date');
@@ -33,31 +32,26 @@ class TenantContractController extends Controller
                 $query->whereNotNull('end_date');
             }
         }
-        
-        // Lọc theo tòa nhà
+
         if ($request->has('apartment_id') && $request->apartment_id) {
             $query->whereHas('room', function($q) use ($request) {
                 $q->where('apartment_id', $request->apartment_id);
             });
         }
-        
-        // Lọc theo phòng
+
         if ($request->has('room_id') && $request->room_id) {
             $query->where('apartment_room_id', $request->room_id);
         }
-        
-        // Lọc theo người thuê
+
         if ($request->has('tenant_id') && $request->tenant_id) {
             $query->where('tenant_id', $request->tenant_id);
         }
-        
-        // Lọc theo ngày bắt đầu
+
         if ($request->has('start_date') && $request->start_date) {
             $startDate = Carbon::parse($request->start_date);
             $query->whereDate('start_date', '>=', $startDate);
         }
         
-        // Lọc theo khoảng thời gian
         if ($request->has('date_range') && $request->date_range) {
             $dates = explode(' - ', $request->date_range);
             if (count($dates) == 2) {
@@ -66,16 +60,13 @@ class TenantContractController extends Controller
                 $query->whereBetween('start_date', [$startDate, $endDate]);
             }
         }
-        
-        // Phân trang kết quả
+
         $contracts = $query->with(['room.apartment', 'tenant', 'feeCollections'])
             ->orderBy('start_date', 'desc')
             ->paginate(10);
-        
-        // Lấy danh sách tòa nhà để dropdown filter
+
         $apartments = Apartment::where('user_id', Auth::id())->orderBy('name')->get();
         
-        // Lấy danh sách người thuê
         $tenants = Tenant::whereHas('contracts.room.apartment', function($q) {
             $q->where('user_id', Auth::id());
         })->orderBy('name')->get();
@@ -88,23 +79,20 @@ class TenantContractController extends Controller
      */
     public function create(Request $request): View
     {
-        // Lấy danh sách phòng trọ chưa có người thuê
+
         $rooms = ApartmentRoom::whereHas('apartment', function($q) {
             $q->where('user_id', Auth::id());
         })
         ->whereDoesntHave('contracts', function($q) {
-            $q->whereNull('end_date'); // Không có hợp đồng đang active
+            $q->whereNull('end_date'); 
         })
         ->with('apartment')
         ->get();
-        
-        // Nếu có room_id từ query string
+
         $selectedRoomId = $request->room_id;
         
-        // Nếu có selected_tenant từ query string (when returning from tenant creation)
         $selectedTenantId = $request->selected_tenant;
         
-        // Nếu đã chọn phòng, lấy thông tin giá mặc định
         $defaultPrice = null;
         if ($selectedRoomId) {
             $room = ApartmentRoom::find($selectedRoomId);
@@ -112,8 +100,7 @@ class TenantContractController extends Controller
                 $defaultPrice = $room->default_price;
             }
         }
-        
-        // Lấy người thuê đã chọn (nếu có)
+
         $selectedTenant = null;
         if ($selectedTenantId) {
             $selectedTenant = Tenant::find($selectedTenantId);
@@ -138,18 +125,21 @@ class TenantContractController extends Controller
         try {
             $validatedData = $request->validated();
             
-            // Kiểm tra quyền truy cập phòng
             $room = ApartmentRoom::findOrFail($validatedData['apartment_room_id']);
             $this->authorize('view', $room);
             
-            // Kiểm tra xem phòng đã có người thuê chưa
+
             if ($room->activeContract()->exists()) {
                 return back()->with('error', 'Phòng này đã có người thuê.');
             }
             
-            // Nếu là tenant_id mới (không tồn tại trong database), tạo mới tenant
+
+            if ($room->max_tenant > 0 && $validatedData['number_of_tenant_current'] > $room->max_tenant) {
+                return back()->with('error', 'Số người ở vượt quá giới hạn của phòng (tối đa ' . $room->max_tenant . ' người).');
+            }
+            
             if ($request->has('new_tenant') && $request->new_tenant == "1") {
-                // Kiểm tra dữ liệu tenant mới
+
                 $request->validate([
                     'tenant_name' => 'required|string|max:45',
                     'tenant_tel' => 'required|string|max:45',
@@ -167,17 +157,17 @@ class TenantContractController extends Controller
                 $validatedData['tenant_id'] = $tenant->id;
             }
             
-            // Format ngày
+
             $validatedData['start_date'] = Carbon::parse($validatedData['start_date']);
             if (!empty($validatedData['end_date'])) {
                 $validatedData['end_date'] = Carbon::parse($validatedData['end_date']);
             } else {
-                // Đảm bảo end_date là null khi trống
+
                 $validatedData['end_date'] = null;
             }
             
-            // Tạo hợp đồng
             $contract = TenantContract::create($validatedData);
+            $contract->load('tenant');
             
             DB::commit();
             
@@ -227,13 +217,16 @@ class TenantContractController extends Controller
         
         try {
             $validatedData = $request->validated();
-            
-            // Format ngày
+
+            $room = $tenantContract->room;
+            if ($room->max_tenant > 0 && $validatedData['number_of_tenant_current'] > $room->max_tenant) {
+                return back()->with('error', 'Số người ở vượt quá giới hạn của phòng (tối đa ' . $room->max_tenant . ' người).');
+            }
+ 
             $validatedData['start_date'] = Carbon::parse($validatedData['start_date']);
             if (!empty($validatedData['end_date'])) {
                 $validatedData['end_date'] = Carbon::parse($validatedData['end_date']);
             } else {
-                // Đảm bảo end_date là null khi trống
                 $validatedData['end_date'] = null;
             }
             
@@ -256,8 +249,7 @@ class TenantContractController extends Controller
     public function destroy(TenantContract $tenantContract): RedirectResponse
     {
         $this->authorize('delete', $tenantContract);
-        
-        // Kiểm tra xem hợp đồng đã có khoản thu tiền chưa
+
         if ($tenantContract->feeCollections()->exists()) {
             return back()->with('error', 'Không thể xóa hợp đồng đã có khoản thu tiền.');
         }

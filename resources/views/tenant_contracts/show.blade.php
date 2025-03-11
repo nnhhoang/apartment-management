@@ -82,7 +82,11 @@
                         <td>
                             @if($tenantContract->end_date)
                                 {{ $tenantContract->end_date->format('d/m/Y') }}
-                                <span class="badge bg-danger">Đã kết thúc</span>
+                                @if($tenantContract->end_date->isPast())
+                                    <span class="badge bg-danger">Đã kết thúc</span>
+                                @else
+                                    <span class="badge bg-warning">Có thời hạn</span>
+                                @endif
                             @else
                                 <span class="badge bg-success">Đang hiệu lực</span>
                                 <button type="button" class="btn btn-sm btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#endContractModal">
@@ -165,7 +169,7 @@
         <div class="card shadow">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-primary">Lịch sử thu tiền</h6>
-                @if(!$tenantContract->end_date)
+                @if(!$tenantContract->end_date || !$tenantContract->end_date->isPast())
                 <a href="{{ url('/room_fees/create?room_id=' . $tenantContract->room->id . '&contract_id=' . $tenantContract->id) }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus me-1"></i>Tạo khoản thu mới
                 </a>
@@ -365,6 +369,11 @@
                     <div class="mb-3">
                         <label for="end_date" class="form-label">Ngày kết thúc <span class="text-danger">*</span></label>
                         <input type="text" class="form-control datepicker" id="end_date" name="end_date" value="{{ date('Y-m-d') }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="end_reason" class="form-label">Lý do kết thúc</label>
+                        <textarea class="form-control" id="end_reason" name="end_reason" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">

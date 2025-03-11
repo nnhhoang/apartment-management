@@ -12,7 +12,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // Gửi thông báo tiền trọ chưa thanh toán đủ vào ngày 10 hàng tháng
         $schedule->command('rent:unpaid-notifications')
                 ->monthlyOn(10, '08:00')
                 ->appendOutputTo(storage_path('logs/unpaid-notifications.log'));

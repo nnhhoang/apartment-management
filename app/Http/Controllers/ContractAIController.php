@@ -17,49 +17,36 @@ class ContractAIController extends Controller
      */
     protected OpenAIService $openAIService;
 
-    /**
-     * Khởi tạo controller với service OpenAI.
-     */
     public function __construct(OpenAIService $openAIService)
     {
         $this->openAIService = $openAIService;
     }
 
-    /**
-     * Hiển thị giao diện trợ lý AI cho hợp đồng.
-     */
+
     public function show(TenantContract $tenantContract): View
     {
-        // Kiểm tra quyền truy cập
+
         if (Gate::denies('view-contract', $tenantContract)) {
             abort(403, 'Unauthorized action.');
         }
-        
-        // Load các mối quan hệ cần thiết
+
         $tenantContract->load(['room.apartment', 'tenant']);
         
         return view('tenant_contracts.ai_assistant', compact('tenantContract'));
     }
 
-    /**
-     * Xử lý câu hỏi về hợp đồng.
-     */
     public function askQuestion(Request $request, TenantContract $tenantContract): JsonResponse
     {
-        // Kiểm tra quyền truy cập
         if (Gate::denies('view-contract', $tenantContract)) {
             abort(403, 'Unauthorized action.');
         }
-        
-        // Validate câu hỏi
+
         $validated = $request->validate([
             'question' => 'required|string|min:5|max:500',
         ]);
-        
-        // Load các mối quan hệ cần thiết
+
         $tenantContract->load(['room.apartment', 'tenant']);
-        
-        // Chuẩn bị dữ liệu hợp đồng để gửi đến AI
+
         $contractData = [
             'tenant_name' => $tenantContract->tenant->name,
             'room_number' => $tenantContract->room->room_number,
@@ -78,8 +65,7 @@ class ContractAIController extends Controller
             'end_date' => $tenantContract->end_date ? $tenantContract->end_date->format('d/m/Y') : null,
             'note' => $tenantContract->note,
         ];
-        
-        // Gửi câu hỏi đến AI
+
         $answer = $this->openAIService->askAboutContract($validated['question'], $contractData);
         
         if ($answer) {
@@ -95,15 +81,11 @@ class ContractAIController extends Controller
         }
     }
 
-    /**
-     * Hiển thị trang trợ lý AI cho người thuê.
-     */
     public function tenantAssistant(): View
     {
-        // Lấy hợp đồng đang hoạt động của người dùng
+
         $user = Auth::user();
-        
-        // Tìm các hợp đồng mà người dùng là người thuê
+
         $activeContracts = TenantContract::whereHas('tenant', function($query) use ($user) {
                 $query->where('email', $user->email);
             })

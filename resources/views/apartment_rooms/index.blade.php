@@ -66,15 +66,16 @@
                         <td>{{ $room->apartment->name }}</td>
                         <td>{{ number_format($room->default_price, 0, ',', '.') }} VNĐ</td>
                         <td>
-                            @if($room->activeContract)
+                            @if($room->hasActiveContract())
                                 <span class="badge bg-success">Đã thuê</span>
                             @else
                                 <span class="badge bg-warning">Trống</span>
                             @endif
                         </td>
                         <td>
-                            @if($room->activeContract)
-                                {{ $room->activeContract->tenant->name }}
+                            @if($room->hasActiveContract())
+                                @php $activeContract = $room->getActiveContract(); @endphp
+                                {{ $activeContract->tenant->name }}
                             @else
                                 <span class="text-muted">Chưa có</span>
                             @endif

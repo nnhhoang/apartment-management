@@ -91,13 +91,20 @@
                                     <td>{{ $room->room_number }}</td>
                                     <td>{{ number_format($room->default_price, 0, ',', '.') }} VNĐ</td>
                                     <td>
-                                        @if($room->activeContract)
+                                        @if($room->hasActiveContract())
                                             <span class="badge bg-success">Đã thuê</span>
                                         @else
                                             <span class="badge bg-warning">Trống</span>
                                         @endif
                                     </td>
-                                    <td>{{ $room->activeContract ? $room->activeContract->number_of_tenant_current : '0' }}</td>
+                                    <td>
+                                        @if($room->hasActiveContract())
+                                            @php $activeContract = $room->getActiveContract(); @endphp
+                                            {{ $activeContract->number_of_tenant_current }}
+                                        @else
+                                            0
+                                        @endif
+                                    </td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ url('/apartment_rooms/' . $room->id) }}" class="btn btn-sm btn-info" title="Xem chi tiết">

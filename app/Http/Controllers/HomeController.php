@@ -20,8 +20,7 @@ class HomeController extends Controller
     public function __invoke(Request $request): View
     {
         $user = Auth::user();
-        
-        // Thống kê tổng quan
+
         $totalApartments = Apartment::where('user_id', $user->id)->count();
         $totalRooms = ApartmentRoom::whereHas('apartment', function ($query) use ($user) {
             $query->where('user_id', $user->id);
@@ -36,8 +35,7 @@ class HomeController extends Controller
         ->count();
         
         $vacantRooms = $totalRooms - $occupiedRooms;
-        
-        // Thống kê doanh thu tháng hiện tại
+
         $currentMonth = Carbon::now();
         $currentMonthIncome = RoomFeeCollection::whereHas('room.apartment', function ($query) use ($user) {
             $query->where('user_id', $user->id);
@@ -45,22 +43,19 @@ class HomeController extends Controller
         ->whereMonth('charge_date', $currentMonth->month)
         ->whereYear('charge_date', $currentMonth->year)
         ->sum('total_paid');
-        
-        // Thống kê doanh thu dự kiến
+
         $expectedIncome = TenantContract::whereHas('room.apartment', function ($query) use ($user) {
             $query->where('user_id', $user->id);
         })
         ->whereNull('end_date')
         ->sum('price');
-        
-        // Tổng nợ chưa thu
+
         $totalDebt = RoomFeeCollection::whereHas('room.apartment', function ($query) use ($user) {
             $query->where('user_id', $user->id);
         })
         ->whereRaw('total_paid < total_price')
         ->sum(DB::raw('total_price - total_paid'));
-        
-        // Các phòng chưa thanh toán đủ
+
         $unpaidRooms = RoomFeeCollection::with(['room.apartment', 'tenant'])
             ->whereHas('room.apartment', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
@@ -69,8 +64,7 @@ class HomeController extends Controller
             ->orderBy('charge_date', 'desc')
             ->limit(5)
             ->get();
-        
-        // Danh sách các tòa nhà
+
         $apartments = Apartment::where('user_id', $user->id)
             ->withCount('rooms')
             ->get();

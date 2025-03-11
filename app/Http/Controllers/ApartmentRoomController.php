@@ -22,21 +22,17 @@ class ApartmentRoomController extends Controller
         $query = ApartmentRoom::whereHas('apartment', function($q) {
             $q->where('user_id', Auth::id());
         });
-        
-        // Tìm kiếm theo tòa nhà
+
         if ($request->has('apartment_id') && $request->apartment_id) {
             $query->where('apartment_id', $request->apartment_id);
         }
-        
-        // Tìm kiếm theo số phòng
+
         if ($request->has('room_number') && $request->room_number) {
             $query->where('room_number', 'like', "%{$request->room_number}%");
         }
-        
-        // Phân trang kết quả
-        $rooms = $query->with('apartment')->paginate(10);
-        
-        // Lấy danh sách tòa nhà để dropdown filter
+
+        $rooms = $query->with(['apartment', 'contracts.tenant'])->paginate(10);
+
         $apartments = Apartment::where('user_id', Auth::id())->orderBy('name')->get();
         
         return view('apartment_rooms.index', compact('rooms', 'apartments'));
@@ -48,8 +44,7 @@ class ApartmentRoomController extends Controller
     public function create(Request $request): View
     {
         $apartments = Apartment::where('user_id', Auth::id())->orderBy('name')->get();
-        
-        // Nếu có apartment_id từ query string (từ trang chi tiết tòa nhà)
+
         $selectedApartmentId = $request->apartment_id;
         
         return view('apartment_rooms.create', compact('apartments', 'selectedApartmentId'));
@@ -61,21 +56,17 @@ class ApartmentRoomController extends Controller
     public function store(ApartmentRoomRequest $request): RedirectResponse
     {
         $validatedData = $request->validated();
-        
-        // Kiểm tra quyền truy cập tòa nhà
+
         $apartment = Apartment::findOrFail($validatedData['apartment_id']);
         $this->authorize('view', $apartment);
-        
-        // Xử lý upload ảnh
+
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('rooms', 'public');
             $validatedData['image'] = $path;
         }
-        
-        // Tạo phòng trọ
+
         $room = ApartmentRoom::create($validatedData);
-        
-        // Trigger event để log
+
         event(new ApartmentRoomCreated($room));
         
         return redirect()->route('apartment_rooms.show', $room)
@@ -89,7 +80,7 @@ class ApartmentRoomController extends Controller
     {
         $this->authorize('view', $apartmentRoom);
         
-        $apartmentRoom->load('apartment', 'activeContract.tenant', 'feeCollections');
+        $apartmentRoom->load(['apartment', 'contracts.tenant', 'feeCollections']);
         
         return view('apartment_rooms.show', compact('apartmentRoom'));
     }
@@ -114,16 +105,14 @@ class ApartmentRoomController extends Controller
         $this->authorize('update', $apartmentRoom);
         
         $validatedData = $request->validated();
-        
-        // Kiểm tra quyền truy cập tòa nhà mới nếu đã thay đổi
+
         if ($validatedData['apartment_id'] != $apartmentRoom->apartment_id) {
             $apartment = Apartment::findOrFail($validatedData['apartment_id']);
             $this->authorize('view', $apartment);
         }
-        
-        // Xử lý upload ảnh
+
         if ($request->hasFile('image')) {
-            // Xóa ảnh cũ nếu có
+
             if ($apartmentRoom->image) {
                 Storage::disk('public')->delete($apartmentRoom->image);
             }
@@ -144,13 +133,11 @@ class ApartmentRoomController extends Controller
     public function destroy(ApartmentRoom $apartmentRoom): RedirectResponse
     {
         $this->authorize('delete', $apartmentRoom);
-        
-        // Kiểm tra xem phòng đã có hợp đồng hay chưa
+
         if ($apartmentRoom->contracts()->exists()) {
             return back()->with('error', 'Không thể xóa phòng đã có hợp đồng.');
         }
-        
-        // Xóa ảnh của phòng nếu có
+
         if ($apartmentRoom->image) {
             Storage::disk('public')->delete($apartmentRoom->image);
         }

@@ -42,11 +42,44 @@ class ApartmentRoom extends Model
     }
 
     /**
+     * Kiểm tra xem phòng có hợp đồng đang hoạt động hay không.
+     */
+    public function hasActiveContract(): bool
+    {
+        return $this->contracts()
+            ->where(function($query) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>', now());
+            })
+            ->exists();
+    }
+
+    /**
+     * Lấy hợp đồng đang hoạt động của phòng.
+     */
+    public function getActiveContract()
+    {
+        return $this->contracts()
+            ->with('tenant')
+            ->where(function($query) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>', now());
+            })
+            ->latest('id')
+            ->first();
+    }
+
+    /**
      * Get the active contract for the room.
      */
     public function activeContract(): HasOne
     {
-        return $this->hasOne(TenantContract::class)->whereNull('end_date')->latest();
+        return $this->hasOne(TenantContract::class)
+            ->where(function($query) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>', now());
+            })
+            ->latest('id');
     }
 
     /**

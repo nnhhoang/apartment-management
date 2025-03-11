@@ -34,13 +34,11 @@ class SendUnpaidRentNotifications extends Command
         $previousMonth = Carbon::now()->subMonth();
         $this->info('Checking unpaid rent for ' . $previousMonth->format('F Y'));
 
-        // Lấy tất cả user có phòng trọ
         $users = User::whereHas('apartments.rooms')->get();
         
         $totalNotified = 0;
         
         foreach ($users as $user) {
-            // Lấy các phòng chưa thanh toán đủ của tháng trước
             $unpaidCollections = RoomFeeCollection::with(['room.apartment', 'tenant', 'contract'])
                 ->whereHas('room.apartment', function ($query) use ($user) {
                     $query->where('user_id', $user->id);
@@ -50,14 +48,11 @@ class SendUnpaidRentNotifications extends Command
                 ->whereRaw('total_paid < total_price')
                 ->get();
                 
-            // Nếu có phòng chưa thanh toán đủ
             if ($unpaidCollections->isNotEmpty()) {
                 $this->info("User {$user->email} has {$unpaidCollections->count()} unpaid rooms");
                 
-                // Gửi email
                 Mail::to($user)->send(new UnpaidRentNotification($user, $unpaidCollections, $previousMonth));
-                
-                // Trigger event để log
+
                 event(new UnpaidRentNotificationSent($user, $unpaidCollections));
                 
                 $totalNotified += $unpaidCollections->count();
